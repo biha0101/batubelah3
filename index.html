@@ -326,59 +326,57 @@
             margin-bottom: 15px;
         }
 
-        /* Gaya Kotak Laporan Percubaan */
-        .review-box {
-            margin-top: 15px;
-            padding: 15px;
+        /* Gaya Petak Laporan Analisis Guru */
+        .teacher-log-box {
+            margin-top: 20px;
+            padding: 18px;
             background-color: #FFFFFF;
             border-radius: 16px;
-            border: 2px dashed #EE964B;
+            border: 2px dashed #0D3B66;
             text-align: left;
+            max-height: 250px;
+            overflow-y: auto;
         }
 
-        .review-title {
+        .teacher-log-title {
             font-size: 1.1rem;
             font-weight: bold;
             color: #0D3B66;
             margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
-        .review-list {
-            list-style-type: none;
-            padding-left: 0;
-        }
-
-        .review-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
+        .log-item {
             background-color: #FEF9EF;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            border: 1px solid #E0E1DD;
+            border-left: 4px solid #EE964B;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            font-size: 0.95rem;
         }
 
-        .review-item-text {
-            font-size: 1.05rem;
+        .log-item-header {
+            font-weight: bold;
             color: #0D3B66;
+            margin-bottom: 4px;
         }
 
-        .review-audio-btn {
-            background-color: #EE964B;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
+        .log-attempt {
+            color: #555;
+            margin-left: 10px;
+            line-height: 1.5;
+        }
+
+        .log-wrong {
+            color: #E63946;
+            font-weight: bold;
+        }
+
+        .log-correct {
+            color: #2A9D8F;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -442,10 +440,10 @@
             <div class="stars-display" id="starsDisplay">⭐⭐⭐⭐⭐</div>
             <div class="feedback-text" id="feedbackText">Syabas!</div>
 
-            <!-- Bahagian Laporan Perkataan Yang Memerlukan Percubaan Semula -->
-            <div class="review-box" id="reviewBox" style="display: none;">
-                <div class="review-title">💡 Perkataan Untuk Diperhatikan Lagi:</div>
-                <div class="review-list" id="reviewList"></div>
+            <!-- Petak Laporan Rekod Suara Untuk Guru -->
+            <div class="teacher-log-box" id="teacherLogBox">
+                <div class="teacher-log-title">📊 Laporan Analisis Percubaan Murid (Guru/Ibu Bapa):</div>
+                <div id="teacherLogList"></div>
             </div>
         </div>
         <button class="restart-btn" onclick="mainSemula()">Main Semula 🔄</button>
@@ -555,8 +553,8 @@
     let sedangMemprosesTersalah = false;
     let pemainAudioSemasa = null;
 
-    let perlukanPercubaanSemula = false;
-    let senaraiPerluLatihan = [];
+    // Pembolehubah Rekod Analisis Guru
+    let logPercubaanKeseluruhan = [];
 
     function mainAudio(namaFail) {
         if (pemainAudioSemasa) {
@@ -622,7 +620,7 @@
 
         jumlahMarkah = 0;
         indeksKataSemasa = 0;
-        senaraiPerluLatihan = [];
+        logPercubaanKeseluruhan = [];
 
         document.getElementById('playerGreeting').innerText = `Selamat mencuba, ${namaPemain}! 👋`;
         document.getElementById('scoreDisplay').innerText = `Markah: ${jumlahMarkah}`;
@@ -639,8 +637,14 @@
         container.innerHTML = '';
         
         indeksSukuKataSemasa = 0;
-        perlukanPercubaanSemula = false;
         
+        // Cipta struktur rekod baharu untuk perkataan ini
+        logPercubaanKeseluruhan.push({
+            kata: itemSemasa.kata,
+            emoji: itemSemasa.emoji,
+            rekodSebutan: []
+        });
+
         itemSemasa.sukuKata.forEach((sk, skIdx) => {
             const groupDiv = document.createElement('div');
             groupDiv.className = `syllable-group ${skIdx === 0 ? 'active-group' : ''}`;
@@ -714,11 +718,19 @@
 
         const itemSemasa = senaraiKata[indeksKataSemasa];
         const skSemasa = itemSemasa.sukuKata[indeksSukuKataSemasa];
+        const logPerkataanSemasa = logPercubaanKeseluruhan[logPercubaanKeseluruhan.length - 1];
         
         const mengandungiBunyiSukuKata = sebutan.includes(skSemasa.teks);
         const mengandungiSemuaHuruf = skSemasa.huruf.every(h => sebutan.includes(h));
 
         if (mengandungiBunyiSukuKata || mengandungiSemuaHuruf) {
+            // Rekod Sebutan Betul
+            logPerkataanSemasa.rekodSebutan.push({
+                sasaran: skSemasa.teks,
+                dikesan: sebutan,
+                status: 'BETUL'
+            });
+
             skSemasa.huruf.forEach((_, hIdx) => {
                 const box = document.getElementById(`box-${indeksSukuKataSemasa}-${hIdx}`);
                 box.style.color = '#0D3B66';
@@ -733,8 +745,6 @@
                 kemaskiniStatus(`Bagus! Teruskan mengeja suku kata seterusnya.`);
             } else {
                 hentikanPengecam();
-                
-                // Markah sentiasa bertambah 10 bagi menghargai usaha murid
                 jumlahMarkah += 10;
                 document.getElementById('scoreDisplay').innerText = `Markah: ${jumlahMarkah}`;
 
@@ -744,17 +754,12 @@
                 document.getElementById('nextBtn').style.display = 'inline-block';
             }
         } else if (sebutan.length > 1) {
-            // Rekod perkataan ini jika memerlukan percubaan lebih daripada sekali
-            if (!perlukanPercubaanSemula) {
-                perlukanPercubaanSemula = true;
-                const ejaanLengkapSukuKata = itemSemasa.sukuKata.map(s => s.teks).join(" - ");
-                senaraiPerluLatihan.push({
-                    kata: itemSemasa.kata,
-                    emoji: itemSemasa.emoji,
-                    audio: itemSemasa.audio,
-                    ejaanBetul: ejaanLengkapSukuKata
-                });
-            }
+            // Rekod Sebutan Salah
+            logPerkataanSemasa.rekodSebutan.push({
+                sasaran: skSemasa.teks,
+                dikesan: sebutan,
+                status: 'SALAH'
+            });
 
             sedangMemprosesTersalah = true;
             
@@ -801,27 +806,33 @@
         document.getElementById('starsDisplay').innerText = bintang;
         document.getElementById('feedbackText').innerText = ulasan;
 
-        // Memaparkan Senarai Perkataan Untuk Rujukan Pembelajaran
-        const reviewBox = document.getElementById('reviewBox');
-        const reviewList = document.getElementById('reviewList');
-        reviewList.innerHTML = '';
+        // Bina Paparan Laporan Analisis Suara Untuk Guru
+        const teacherLogList = document.getElementById('teacherLogList');
+        teacherLogList.innerHTML = '';
 
-        if (senaraiPerluLatihan.length > 0) {
-            senaraiPerluLatihan.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'review-item';
-                div.innerHTML = `
-                    <div class="review-item-text">
-                        ${item.emoji} <strong>${item.kata}</strong> ➔ Suku Kata: <strong>${item.ejaanBetul}</strong>
-                    </div>
-                    <button class="review-audio-btn" onclick="mainAudio('${item.audio}')" title="Dengar sebutan">🔊</button>
-                `;
-                reviewList.appendChild(div);
+        logPercubaanKeseluruhan.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'log-item';
+
+            let senaraiPercubaanHTML = '';
+            item.rekodSebutan.forEach((r, idx) => {
+                if (r.status === 'SALAH') {
+                    senaraiPercubaanHTML += `<div class="log-attempt">• Suku Kata [${r.sasaran}] ➔ Dikesan: <span class="log-wrong">"${r.dikesan}"</span> ❌</div>`;
+                } else {
+                    senaraiPercubaanHTML += `<div class="log-attempt">• Suku Kata [${r.sasaran}] ➔ Dikesan: <span class="log-correct">"${r.dikesan}"</span> ✅</div>`;
+                }
             });
-            reviewBox.style.display = 'block';
-        } else {
-            reviewBox.style.display = 'none';
-        }
+
+            if (senaraiPercubaanHTML === '') {
+                senaraiPercubaanHTML = `<div class="log-attempt" style="color:#2A9D8F;">• Mengeja terus secara sempurna! ✅</div>`;
+            }
+
+            itemDiv.innerHTML = `
+                <div class="log-item-header">${item.emoji} ${item.kata}</div>
+                ${senaraiPercubaanHTML}
+            `;
+            teacherLogList.appendChild(itemDiv);
+        });
 
         mainAudio(audioUlasan);
     }
