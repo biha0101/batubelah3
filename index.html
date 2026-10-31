@@ -483,7 +483,7 @@
             <div class="stars-display" id="starsDisplay">⭐⭐⭐⭐⭐</div>
             <div class="feedback-text" id="feedbackText">Syabas!</div>
 
-            <!-- Petak Laporan Rekod Suara Untuk Guru -->
+            <!-- Petak Laporan Rekod Analisis Untuk Guru -->
             <div class="teacher-log-box" id="teacherLogBox">
                 <div class="teacher-log-title">📊 Laporan Analisis Percubaan Murid (Guru/Ibu Bapa):</div>
                 <div id="teacherLogList"></div>
@@ -636,13 +636,10 @@
 
         pengecamSuara.onresult = function(event) {
             const KeputusanTerakhir = event.results[event.results.length - 1];
-            const sebutanPenuh = KeputusanTerakhir[0].transcript.toUpperCase().trim();
+            const sebutanRaw = KeputusanTerakhir[0].transcript.toUpperCase().trim();
             
-            const senaraiPerkataan = sebutanPenuh.split(" ");
-            const sebutanSemasa = senaraiPerkataan[senaraiPerkataan.length - 1];
-
-            kemaskiniStatus(`Suara dikesan: "${sebutanSemasa}"`);
-            semakEjaanSukuKata(sebutanSemasa, sebutanPenuh);
+            kemaskiniStatus(`Suara dikesan...`);
+            semakEjaanSukuKata(sebutanRaw);
         };
 
         pengecamSuara.onerror = function(event) {
@@ -691,7 +688,7 @@
         logPercubaanKeseluruhan.push({
             kata: itemSemasa.kata,
             emoji: itemSemasa.emoji,
-            rekodSebutan: []
+            sukuKataSalah: []
         });
 
         itemSemasa.sukuKata.forEach((sk, skIdx) => {
@@ -762,23 +759,19 @@
         btn.innerHTML = '🎤 Sedia Mengeja';
     }
 
-    function semakEjaanSukuKata(sebutanSemasa, sebutanPenuh) {
+    function semakEjaanSukuKata(sebutanRaw) {
         if (sedangMemprosesTersalah) return;
 
         const itemSemasa = senaraiKata[indeksKataSemasa];
         const skSemasa = itemSemasa.sukuKata[indeksSukuKataSemasa];
         const logPerkataanSemasa = logPercubaanKeseluruhan[logPercubaanKeseluruhan.length - 1];
         
-        const mengandungiBunyiSukuKata = sebutanSemasa.includes(skSemasa.teks) || sebutanPenuh.includes(skSemasa.teks);
-        const mengandungiSemuaHuruf = skSemasa.huruf.every(h => sebutanSemasa.includes(h) || sebutanPenuh.includes(h));
+        const sebutanBersih = sebutanRaw.replace(/\s+/g, '');
+        
+        const mengandungiBunyiSukuKata = sebutanBersih.includes(skSemasa.teks) || sebutanRaw.includes(skSemasa.teks);
+        const mengandungiSemuaHuruf = skSemasa.huruf.every(h => sebutanBersih.includes(h) || sebutanRaw.includes(h));
 
         if (mengandungiBunyiSukuKata || mengandungiSemuaHuruf) {
-            logPerkataanSemasa.rekodSebutan.push({
-                sasaran: skSemasa.teks,
-                dikesan: sebutanSemasa,
-                status: 'BETUL'
-            });
-
             skSemasa.huruf.forEach((_, hIdx) => {
                 const box = document.getElementById(`box-${indeksSukuKataSemasa}-${hIdx}`);
                 box.style.color = '#0D3B66';
@@ -792,7 +785,7 @@
                 pengecamSuara.stop();
                 setTimeout(() => {
                     if (adakahSedangMendengar) pengecamSuara.start();
-                }, 200);
+                }, 150);
             }
 
             if (indeksSukuKataSemasa < itemSemasa.sukuKata.length) {
@@ -808,12 +801,11 @@
                 mainAudio("syabas.mp3");
                 document.getElementById('nextBtn').style.display = 'inline-block';
             }
-        } else if (sebutanSemasa.length > 1) {
-            logPerkataanSemasa.rekodSebutan.push({
-                sasaran: skSemasa.teks,
-                dikesan: sebutanSemasa,
-                status: 'SALAH'
-            });
+        } else if (sebutanBersih.length >= 1) {
+            // Rekod suku kata yang tersalah eja sahaja tanpa teks sebutan raw
+            if (!logPerkataanSemasa.sukuKataSalah.includes(skSemasa.teks)) {
+                logPerkataanSemasa.sukuKataSalah.push(skSemasa.teks);
+            }
 
             sedangMemprosesTersalah = true;
             
@@ -830,7 +822,7 @@
                     box.classList.remove('wrong-flash');
                 });
                 sedangMemprosesTersalah = false;
-            }, 800);
+            }, 600);
         }
     }
 
@@ -867,22 +859,17 @@
             const itemDiv = document.createElement('div');
             itemDiv.className = 'log-item';
 
-            let senaraiPercubaanHTML = '';
-            item.rekodSebutan.forEach((r) => {
-                if (r.status === 'SALAH') {
-                    senaraiPercubaanHTML += `<div class="log-attempt">• Suku Kata [${r.sasaran}] ➔ Dikesan: <span class="log-wrong">"${r.dikesan}"</span> ❌</div>`;
-                } else {
-                    senaraiPercubaanHTML += `<div class="log-attempt">• Suku Kata [${r.sasaran}] ➔ Dikesan: <span class="log-correct">"${r.dikesan}"</span> ✅</div>`;
-                }
-            });
-
-            if (senaraiPercubaanHTML === '') {
-                senaraiPercubaanHTML = `<div class="log-attempt" style="color:#2A9D8F;">• Mengeja terus secara sempurna! ✅</div>`;
+            let rincianStatus = '';
+            if (item.sukuKataSalah.length > 0) {
+                const senaraiSukuKata = item.sukuKataSalah.map(sk => `[${sk}]`).join(', ');
+                rincianStatus = `<div class="log-attempt">• Perlukan percubaan semula pada suku kata: <span class="log-wrong">${senaraiSukuKata}</span> ❌</div>`;
+            } else {
+                rincianStatus = `<div class="log-attempt">• Sempurna! Dieja betul pada percubaan pertama. <span class="log-correct">✅</span></div>`;
             }
 
             itemDiv.innerHTML = `
                 <div class="log-item-header">${item.emoji} ${item.kata}</div>
-                ${senaraiPercubaanHTML}
+                ${rincianStatus}
             `;
             teacherLogList.appendChild(itemDiv);
         });
@@ -890,7 +877,6 @@
         mainAudio(audioUlasan);
     }
 
-    // Fungsi menyimpan PDF terus ke laptop
     function simpanPDF() {
         window.print();
     }
