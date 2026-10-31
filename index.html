@@ -499,6 +499,36 @@
 </div>
 
 <script>
+    // ========================================================
+    // FUNGSI PENGHANTARAN DATA GAME KE GOOGLE SHEETS (GAME 3)
+    // ========================================================
+    function hantarKeputusanGame(namaMurid, skorMurid, ulasanGame) {
+      var scriptURL = "https://script.google.com/macros/s/AKfycbyDsjoikwEU7qKmyP4-C3s5Vw20i7ZIu5myo53Q2BU2vyOnFo_TfwriW0p9FyuEaMXeoA/exec";
+
+      var dataGame = {
+        nama: namaMurid,                             // Nama Pemain
+        book: "BATU BELAH BATU BERTANGKUP",          // Tab Sheet Partition
+        game: 3,                                     // Game 3 (G3)
+        skor: skorMurid,                             // Markah Akhir
+        ulasan: ulasanGame || "Syabas dan teruskan!" // Ulasan Permainan
+      };
+
+      fetch(scriptURL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataGame)
+      })
+      .then(function() {
+        console.log("Data Game 3 (G3) berjaya dihantar ke Google Sheets!");
+      })
+      .catch(function(error) {
+        console.error("Ralat semasa menghantar data G3 ke Google Sheets:", error);
+      });
+    }
+
     const senaraiKata = [
         { 
             kata: "TELUR", 
@@ -766,16 +796,11 @@
         const skSemasa = itemSemasa.sukuKata[indeksSukuKataSemasa];
         const logPerkataanSemasa = logPercubaanKeseluruhan[logPercubaanKeseluruhan.length - 1];
         
-        // Bersihkan jarak daripada teks sebutan (Contoh: "T E TE" -> "TETE")
         const sebutanBersih = sebutanRaw.replace(/\s+/g, '');
         
-        // 1. Semak jika sebutan mengandungi suku kata sasaran (contoh: "TE")
         const mengandungiSukuKata = sebutanBersih.includes(skSemasa.teks) || sebutanRaw.includes(skSemasa.teks);
-        
-        // 2. Semak jika semua huruf sasaran wujud dalam sebutan
         const mengandungiSemuaHuruf = skSemasa.huruf.every(h => sebutanBersih.includes(h) || sebutanRaw.includes(h));
 
-        // Syarat Lulus: Bunyi suku kata dikesan ATAU semua huruf individu dikesan
         if (mengandungiSukuKata || mengandungiSemuaHuruf) {
             skSemasa.huruf.forEach((_, hIdx) => {
                 const box = document.getElementById(`box-${indeksSukuKataSemasa}-${hIdx}`);
@@ -786,7 +811,6 @@
 
             indeksSukuKataSemasa++;
 
-            // Reset Buffer: Hentikan dan pulihkan pengecam suara secara automatik untuk membersihkan teks lama
             if (adakahSedangMendengar) {
                 pengecamSuara.stop();
                 setTimeout(() => {
@@ -808,7 +832,6 @@
                 document.getElementById('nextBtn').style.display = 'inline-block';
             }
         } else if (sebutanRaw.length > 2) {
-            // Hanya anggap salah jika teks dikesan sudah melebihi 2 karakter tetapi tidak memenuhi syarat
             if (!logPerkataanSemasa.sukuKataSalah.includes(skSemasa.teks)) {
                 logPerkataanSemasa.sukuKataSalah.push(skSemasa.teks);
             }
@@ -879,6 +902,9 @@
             `;
             teacherLogList.appendChild(itemDiv);
         });
+
+        // Penghantaran data ke Google Sheets apabila skrin tamat dipaparkan
+        hantarKeputusanGame(namaPemain, jumlahMarkah, ulasan);
 
         mainAudio(audioUlasan);
     }
