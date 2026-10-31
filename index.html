@@ -326,32 +326,59 @@
             margin-bottom: 15px;
         }
 
-        /* Gaya Senarai Perkataan Salah */
-        .wrong-words-container {
+        /* Gaya Kotak Laporan Percubaan */
+        .review-box {
             margin-top: 15px;
             padding: 15px;
             background-color: #FFFFFF;
-            border-radius: 12px;
-            border: 2px dashed #E63946;
+            border-radius: 16px;
+            border: 2px dashed #EE964B;
             text-align: left;
         }
 
-        .wrong-words-title {
+        .review-title {
             font-size: 1.1rem;
             font-weight: bold;
-            color: #E63946;
-            margin-bottom: 8px;
+            color: #0D3B66;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .wrong-words-list {
+        .review-list {
             list-style-type: none;
             padding-left: 0;
         }
 
-        .wrong-words-list li {
+        .review-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background-color: #FEF9EF;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #E0E1DD;
+        }
+
+        .review-item-text {
             font-size: 1.05rem;
-            margin-bottom: 6px;
             color: #0D3B66;
+        }
+
+        .review-audio-btn {
+            background-color: #EE964B;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -414,11 +441,11 @@
             <div class="final-score" id="finalScoreText">Jumlah Markah: 0 / 100</div>
             <div class="stars-display" id="starsDisplay">⭐⭐⭐⭐⭐</div>
             <div class="feedback-text" id="feedbackText">Syabas!</div>
-            
-            <!-- Bahagian Senarai Perkataan Salah -->
-            <div class="wrong-words-container" id="wrongWordsBox" style="display: none;">
-                <div class="wrong-words-title">📌 Perkataan Yang Perlu Diperbaiki:</div>
-                <ul class="wrong-words-list" id="wrongWordsList"></ul>
+
+            <!-- Bahagian Laporan Perkataan Yang Memerlukan Percubaan Semula -->
+            <div class="review-box" id="reviewBox" style="display: none;">
+                <div class="review-title">💡 Perkataan Untuk Diperhatikan Lagi:</div>
+                <div class="review-list" id="reviewList"></div>
             </div>
         </div>
         <button class="restart-btn" onclick="mainSemula()">Main Semula 🔄</button>
@@ -426,36 +453,6 @@
 </div>
 
 <script>
-    // ========================================================
-    // FUNGSI PENGHANTARAN DATA GAME KE GOOGLE SHEETS (GAME 3)
-    // ========================================================
-    function hantarKeputusanGame(namaMurid, skorMurid, ulasanGame) {
-      var scriptURL = "https://script.google.com/macros/s/AKfycbyDsjoikwEU7qKmyP4-C3s5Vw20i7ZIu5myo53Q2BU2vyOnFo_TfwriW0p9FyuEaMXeoA/exec";
-
-      var dataGame = {
-        nama: namaMurid,
-        book: "KHAS BATU BELAH BATU BERTANGKUP", // Tab partition Google Sheet
-        game: 3,                            // Ditandakan 3 untuk Game 3
-        skor: skorMurid,
-        ulasan: ulasanGame || ""
-      };
-
-      fetch(scriptURL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(dataGame)
-      })
-      .then(function() {
-        console.log("Data Game 3 (G3) berjaya dihantar ke Google Sheets!");
-      })
-      .catch(function(error) {
-        console.error("Ralat semasa menghantar data G3 ke Google Sheets:", error);
-      });
-    }
-
     const senaraiKata = [
         { 
             kata: "TELUR", 
@@ -558,9 +555,8 @@
     let sedangMemprosesTersalah = false;
     let pemainAudioSemasa = null;
 
-    // Pembolehubah Jejak Ralat Perkataan Semasa & Senarai Perkataan Salah
-    let pernahPernahTersalahEja = false;
-    let senaraiPerkataanSalah = [];
+    let perlukanPercubaanSemula = false;
+    let senaraiPerluLatihan = [];
 
     function mainAudio(namaFail) {
         if (pemainAudioSemasa) {
@@ -626,7 +622,7 @@
 
         jumlahMarkah = 0;
         indeksKataSemasa = 0;
-        senaraiPerkataanSalah = [];
+        senaraiPerluLatihan = [];
 
         document.getElementById('playerGreeting').innerText = `Selamat mencuba, ${namaPemain}! 👋`;
         document.getElementById('scoreDisplay').innerText = `Markah: ${jumlahMarkah}`;
@@ -643,7 +639,7 @@
         container.innerHTML = '';
         
         indeksSukuKataSemasa = 0;
-        pernahPernahTersalahEja = false; // Reset jejak ralat untuk soalan baharu
+        perlukanPercubaanSemula = false;
         
         itemSemasa.sukuKata.forEach((sk, skIdx) => {
             const groupDiv = document.createElement('div');
@@ -738,11 +734,9 @@
             } else {
                 hentikanPengecam();
                 
-                // Tambah markah HANYA JIKA tiada kesalahan ejaan dibuat sepanjang soalan ini
-                if (!pernahPernahTersalahEja) {
-                    jumlahMarkah += 10;
-                    document.getElementById('scoreDisplay').innerText = `Markah: ${jumlahMarkah}`;
-                }
+                // Markah sentiasa bertambah 10 bagi menghargai usaha murid
+                jumlahMarkah += 10;
+                document.getElementById('scoreDisplay').innerText = `Markah: ${jumlahMarkah}`;
 
                 const mesejKejayaan = `Syabas ${namaPemain}! Anda berjaya mengeja ${itemSemasa.kata}!`;
                 kemaskiniStatus("🎉 " + mesejKejayaan);
@@ -750,14 +744,14 @@
                 document.getElementById('nextBtn').style.display = 'inline-block';
             }
         } else if (sebutan.length > 1) {
-            // Ejaan Salah: Tandakan bahawa perkataan ini pernah tersalah eja
-            if (!pernahPernahTersalahEja) {
-                pernahPernahTersalahEja = true;
-                // Simpan perkataan dan ejaan betul suku kata ke dalam senarai ralat
+            // Rekod perkataan ini jika memerlukan percubaan lebih daripada sekali
+            if (!perlukanPercubaanSemula) {
+                perlukanPercubaanSemula = true;
                 const ejaanLengkapSukuKata = itemSemasa.sukuKata.map(s => s.teks).join(" - ");
-                senaraiPerkataanSalah.push({
+                senaraiPerluLatihan.push({
                     kata: itemSemasa.kata,
                     emoji: itemSemasa.emoji,
+                    audio: itemSemasa.audio,
                     ejaanBetul: ejaanLengkapSukuKata
                 });
             }
@@ -798,55 +792,36 @@
         document.getElementById('gameArea').style.display = 'none';
         document.getElementById('resultScreen').style.display = 'block';
 
-        document.getElementById('finalScoreText').innerText = `Markah Akhir: ${jumlahMarkah} / 100`;
+        document.getElementById('finalScoreText').innerText = `Jumlah Markah: ${jumlahMarkah} / 100`;
 
-        let bintang = "";
-        let ulasan = "";
-        let audioUlasan = "";
-
-        if (jumlahMarkah >= 90) {
-            bintang = "⭐⭐⭐⭐⭐";
-            ulasan = `Luar biasa ${namaPemain}! Anda pakar mengeja yang hebat! 🏆`;
-            audioUlasan = "ulasan_5.mp3";
-        } else if (jumlahMarkah >= 70) {
-            bintang = "⭐⭐⭐⭐";
-            ulasan = `Syabas ${namaPemain}! Pencapaian yang sangat baik! 🎉`;
-            audioUlasan = "ulasan_4.mp3";
-        } else if (jumlahMarkah >= 50) {
-            bintang = "⭐⭐⭐";
-            ulasan = `Bagus ${namaPemain}! Usaha yang baik, teruskan latihan! 👍`;
-            audioUlasan = "ulasan_3.mp3";
-        } else if (jumlahMarkah >= 30) {
-            bintang = "⭐⭐";
-            ulasan = `Tidak mengapa ${namaPemain}, cuba lagi untuk dapatkan markah lebih tinggi! 💪`;
-            audioUlasan = "ulasan_2.mp3";
-        } else {
-            bintang = "⭐";
-            ulasan = `Jangan putus asa ${namaPemain}. Jom berlatih lagi untuk jadi lebih hebat. ✨`;
-            audioUlasan = "ulasan_1.mp3";
-        }
+        let bintang = "⭐⭐⭐⭐⭐";
+        let ulasan = `Luar biasa ${namaPemain}! Anda telah berusaha dengan sangat baik! 🏆`;
+        let audioUlasan = "ulasan_5.mp3";
 
         document.getElementById('starsDisplay').innerText = bintang;
         document.getElementById('feedbackText').innerText = ulasan;
 
-        // Paparkan senarai soalan yang tersalah eja bersama ejaan betul
-        const wrongWordsBox = document.getElementById('wrongWordsBox');
-        const wrongWordsList = document.getElementById('wrongWordsList');
-        wrongWordsList.innerHTML = '';
+        // Memaparkan Senarai Perkataan Untuk Rujukan Pembelajaran
+        const reviewBox = document.getElementById('reviewBox');
+        const reviewList = document.getElementById('reviewList');
+        reviewList.innerHTML = '';
 
-        if (senaraiPerkataanSalah.length > 0) {
-            senaraiPerkataanSalah.forEach(item => {
-                const li = document.createElement('li');
-                li.innerHTML = `${item.emoji} <strong>${item.kata}</strong> ➔ Jawapan Betul: <span style="color: #0D3B66; font-weight: bold;">${item.ejaanBetul}</span>`;
-                wrongWordsList.appendChild(li);
+        if (senaraiPerluLatihan.length > 0) {
+            senaraiPerluLatihan.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'review-item';
+                div.innerHTML = `
+                    <div class="review-item-text">
+                        ${item.emoji} <strong>${item.kata}</strong> ➔ Suku Kata: <strong>${item.ejaanBetul}</strong>
+                    </div>
+                    <button class="review-audio-btn" onclick="mainAudio('${item.audio}')" title="Dengar sebutan">🔊</button>
+                `;
+                reviewList.appendChild(div);
             });
-            wrongWordsBox.style.display = 'block';
+            reviewBox.style.display = 'block';
         } else {
-            wrongWordsBox.style.display = 'none';
+            reviewBox.style.display = 'none';
         }
-
-        // Hantar data markah Game 3 ke Google Sheets
-        hantarKeputusanGame(namaPemain, jumlahMarkah, ulasan);
 
         mainAudio(audioUlasan);
     }
