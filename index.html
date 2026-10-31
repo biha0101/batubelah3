@@ -766,12 +766,17 @@
         const skSemasa = itemSemasa.sukuKata[indeksSukuKataSemasa];
         const logPerkataanSemasa = logPercubaanKeseluruhan[logPercubaanKeseluruhan.length - 1];
         
+        // Bersihkan jarak daripada teks sebutan (Contoh: "T E TE" -> "TETE")
         const sebutanBersih = sebutanRaw.replace(/\s+/g, '');
         
-        const mengandungiBunyiSukuKata = sebutanBersih.includes(skSemasa.teks) || sebutanRaw.includes(skSemasa.teks);
+        // 1. Semak jika sebutan mengandungi suku kata sasaran (contoh: "TE")
+        const mengandungiSukuKata = sebutanBersih.includes(skSemasa.teks) || sebutanRaw.includes(skSemasa.teks);
+        
+        // 2. Semak jika semua huruf sasaran wujud dalam sebutan
         const mengandungiSemuaHuruf = skSemasa.huruf.every(h => sebutanBersih.includes(h) || sebutanRaw.includes(h));
 
-        if (mengandungiBunyiSukuKata || mengandungiSemuaHuruf) {
+        // Syarat Lulus: Bunyi suku kata dikesan ATAU semua huruf individu dikesan
+        if (mengandungiSukuKata || mengandungiSemuaHuruf) {
             skSemasa.huruf.forEach((_, hIdx) => {
                 const box = document.getElementById(`box-${indeksSukuKataSemasa}-${hIdx}`);
                 box.style.color = '#0D3B66';
@@ -781,6 +786,7 @@
 
             indeksSukuKataSemasa++;
 
+            // Reset Buffer: Hentikan dan pulihkan pengecam suara secara automatik untuk membersihkan teks lama
             if (adakahSedangMendengar) {
                 pengecamSuara.stop();
                 setTimeout(() => {
@@ -801,8 +807,8 @@
                 mainAudio("syabas.mp3");
                 document.getElementById('nextBtn').style.display = 'inline-block';
             }
-        } else if (sebutanBersih.length >= 1) {
-            // Rekod suku kata yang tersalah eja sahaja tanpa teks sebutan raw
+        } else if (sebutanRaw.length > 2) {
+            // Hanya anggap salah jika teks dikesan sudah melebihi 2 karakter tetapi tidak memenuhi syarat
             if (!logPerkataanSemasa.sukuKataSalah.includes(skSemasa.teks)) {
                 logPerkataanSemasa.sukuKataSalah.push(skSemasa.teks);
             }
@@ -822,7 +828,7 @@
                     box.classList.remove('wrong-flash');
                 });
                 sedangMemprosesTersalah = false;
-            }, 600);
+            }, 800);
         }
     }
 
