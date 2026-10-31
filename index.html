@@ -326,7 +326,6 @@
             margin-bottom: 15px;
         }
 
-        /* Gaya Petak Laporan Analisis Guru */
         .teacher-log-box {
             margin-top: 20px;
             padding: 18px;
@@ -377,6 +376,50 @@
         .log-correct {
             color: #2A9D8F;
             font-weight: bold;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #0D3B66;
+            color: white;
+            box-shadow: 0 4px 10px rgba(13, 59, 102, 0.2);
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #1D4E89;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .start-btn, .restart-btn, .action-buttons {
+                display: none !important;
+            }
+            .container {
+                border: none;
+                box-shadow: none;
+            }
+            .teacher-log-box {
+                max-height: none;
+                overflow: visible;
+            }
         }
     </style>
 </head>
@@ -444,6 +487,11 @@
             <div class="teacher-log-box" id="teacherLogBox">
                 <div class="teacher-log-title">📊 Laporan Analisis Percubaan Murid (Guru/Ibu Bapa):</div>
                 <div id="teacherLogList"></div>
+            </div>
+
+            <!-- Butang Simpan PDF Ke Laptop -->
+            <div class="action-buttons">
+                <button class="action-btn" onclick="simpanPDF()">🖨️ Muat Turun / Simpan PDF</button>
             </div>
         </div>
         <button class="restart-btn" onclick="mainSemula()">Main Semula 🔄</button>
@@ -553,7 +601,6 @@
     let sedangMemprosesTersalah = false;
     let pemainAudioSemasa = null;
 
-    // Pembolehubah Rekod Analisis Guru
     let logPercubaanKeseluruhan = [];
 
     function mainAudio(namaFail) {
@@ -589,10 +636,13 @@
 
         pengecamSuara.onresult = function(event) {
             const KeputusanTerakhir = event.results[event.results.length - 1];
-            const sebutan = KeputusanTerakhir[0].transcript.toUpperCase().trim();
+            const sebutanPenuh = KeputusanTerakhir[0].transcript.toUpperCase().trim();
             
-            kemaskiniStatus(`Suara dikesan: "${sebutan}"`);
-            semakEjaanSukuKata(sebutan);
+            const senaraiPerkataan = sebutanPenuh.split(" ");
+            const sebutanSemasa = senaraiPerkataan[senaraiPerkataan.length - 1];
+
+            kemaskiniStatus(`Suara dikesan: "${sebutanSemasa}"`);
+            semakEjaanSukuKata(sebutanSemasa, sebutanPenuh);
         };
 
         pengecamSuara.onerror = function(event) {
@@ -638,7 +688,6 @@
         
         indeksSukuKataSemasa = 0;
         
-        // Cipta struktur rekod baharu untuk perkataan ini
         logPercubaanKeseluruhan.push({
             kata: itemSemasa.kata,
             emoji: itemSemasa.emoji,
@@ -713,21 +762,20 @@
         btn.innerHTML = '🎤 Sedia Mengeja';
     }
 
-    function semakEjaanSukuKata(sebutan) {
+    function semakEjaanSukuKata(sebutanSemasa, sebutanPenuh) {
         if (sedangMemprosesTersalah) return;
 
         const itemSemasa = senaraiKata[indeksKataSemasa];
         const skSemasa = itemSemasa.sukuKata[indeksSukuKataSemasa];
         const logPerkataanSemasa = logPercubaanKeseluruhan[logPercubaanKeseluruhan.length - 1];
         
-        const mengandungiBunyiSukuKata = sebutan.includes(skSemasa.teks);
-        const mengandungiSemuaHuruf = skSemasa.huruf.every(h => sebutan.includes(h));
+        const mengandungiBunyiSukuKata = sebutanSemasa.includes(skSemasa.teks) || sebutanPenuh.includes(skSemasa.teks);
+        const mengandungiSemuaHuruf = skSemasa.huruf.every(h => sebutanSemasa.includes(h) || sebutanPenuh.includes(h));
 
         if (mengandungiBunyiSukuKata || mengandungiSemuaHuruf) {
-            // Rekod Sebutan Betul
             logPerkataanSemasa.rekodSebutan.push({
                 sasaran: skSemasa.teks,
-                dikesan: sebutan,
+                dikesan: sebutanSemasa,
                 status: 'BETUL'
             });
 
@@ -739,6 +787,13 @@
             });
 
             indeksSukuKataSemasa++;
+
+            if (adakahSedangMendengar) {
+                pengecamSuara.stop();
+                setTimeout(() => {
+                    if (adakahSedangMendengar) pengecamSuara.start();
+                }, 200);
+            }
 
             if (indeksSukuKataSemasa < itemSemasa.sukuKata.length) {
                 kemaskiniKumpulanAktif();
@@ -753,11 +808,10 @@
                 mainAudio("syabas.mp3");
                 document.getElementById('nextBtn').style.display = 'inline-block';
             }
-        } else if (sebutan.length > 1) {
-            // Rekod Sebutan Salah
+        } else if (sebutanSemasa.length > 1) {
             logPerkataanSemasa.rekodSebutan.push({
                 sasaran: skSemasa.teks,
-                dikesan: sebutan,
+                dikesan: sebutanSemasa,
                 status: 'SALAH'
             });
 
@@ -806,7 +860,6 @@
         document.getElementById('starsDisplay').innerText = bintang;
         document.getElementById('feedbackText').innerText = ulasan;
 
-        // Bina Paparan Laporan Analisis Suara Untuk Guru
         const teacherLogList = document.getElementById('teacherLogList');
         teacherLogList.innerHTML = '';
 
@@ -815,7 +868,7 @@
             itemDiv.className = 'log-item';
 
             let senaraiPercubaanHTML = '';
-            item.rekodSebutan.forEach((r, idx) => {
+            item.rekodSebutan.forEach((r) => {
                 if (r.status === 'SALAH') {
                     senaraiPercubaanHTML += `<div class="log-attempt">• Suku Kata [${r.sasaran}] ➔ Dikesan: <span class="log-wrong">"${r.dikesan}"</span> ❌</div>`;
                 } else {
@@ -835,6 +888,11 @@
         });
 
         mainAudio(audioUlasan);
+    }
+
+    // Fungsi menyimpan PDF terus ke laptop
+    function simpanPDF() {
+        window.print();
     }
 
     function mainSemula() {
