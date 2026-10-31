@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mari Mengeja - Mod Suku Kata</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Lexend', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #FAF0CA;
+            color: #0D3B66;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #FFFFFF;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 650px;
+            width: 100%;
+            text-align: center;
+            border: 4px solid #EE964B;
+        }
+
+        h1 {
+            color: #0D3B66;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .sub-title {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        #startScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .input-group label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .name-input {
+            width: 80%;
+            padding: 12px 18px;
+            font-size: 1.2rem;
+            border: 3px solid #EE964B;
+            border-radius: 12px;
+            text-align: center;
+            outline: none;
+        }
+
+        .instructions-box {
+            background-color: #F4F1DE;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: left;
+            width: 100%;
+            border-left: 6px solid #EE964B;
+        }
+
+        .instructions-box h3 {
+            margin-bottom: 10px;
+            color: #0D3B66;
+        }
+
+        .instructions-box ol {
+            padding-left: 20px;
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+
+        .start-btn, .restart-btn {
+            background-color: #0D3B66;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 16px 40px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(13, 59, 102, 0.3);
+            transition: background 0.2s;
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            background-color: #1D4E89;
+        }
+
+        #gameArea, #resultScreen {
+            display: none;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .greeting {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #EE964B;
+        }
+
+        .score-box {
+            background-color: #0D3B66;
+            color: #F4D35E;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .card {
+            background-color: #F4F1DE;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .emoji-display {
+            font-size: 5rem;
+            margin-bottom: 10px;
+        }
+
+        .word-label {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #0D3B66;
+            margin-bottom: 10px;
+        }
+
+        .listen-word-btn {
+            background-color: #F4D35E;
+            color: #0D3B66;
+            border: 2px solid #EE964B;
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.1s;
+        }
+
+        .listen-word-btn:active {
+            transform: scale(0.95);
+        }
+
+        .syllables-display {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .syllable-group {
+            display: flex;
+            gap: 6px;
+            padding: 10px;
+            background-color: #E0E1DD;
+            border-radius: 12px;
+            border: 2px dashed #0D3B66;
+            transition: all 0.3s ease;
+        }
+
+        .syllable-group.active-group {
+            border-color: #EE964B;
+            background-color: #FEF9EF;
+            box-shadow: 0 0 10px rgba(238, 150, 75, 0.5);
+        }
+
+        .letter-box {
+            width: 55px;
+            height: 55px;
+            border: 3px solid #0D3B66;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            background-color: #FFFFFF;
+            color: #0D3B66;
+            transition: all 0.3s ease;
+        }
+
+        .letter-box.completed {
+            background-color: #F4D35E;
+            color: #0D3B66;
+            border-color: #EE964B;
+        }
+
+        .letter-box.wrong-flash {
+            background-color: #F8D7DA !important;
+            border-color: #E63946 !important;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .controls {
+            margin-top: 15px;
+        }
+
+        .mic-btn {
+            background-color: #EE964B;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 16px 32px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 10px rgba(238, 150, 75, 0.4);
+            transition: background 0.2s;
+        }
+
+        .mic-btn:hover {
+            background-color: #E07A5F;
+        }
+
+        .mic-btn.listening {
+            background-color: #E63946;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(230, 57, 70, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+        }
+
+        .status-msg {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            min-height: 30px;
+            color: #0D3B66;
+        }
+
+        .next-btn {
+            margin-top: 20px;
+            background-color: #0D3B66;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        .result-card {
+            background-color: #F4F1DE;
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 3px solid #EE964B;
+        }
+
+        .stars-display {
+            font-size: 3rem;
+            margin: 15px 0;
+        }
+
+        .final-score {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #0D3B66;
+            margin-bottom: 10px;
+        }
+
+        .feedback-text {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #E07A5F;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        /* Gaya Senarai Perkataan Salah */
+        .wrong-words-container {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            border: 2px dashed #E63946;
+            text-align: left;
+        }
+
+        .wrong-words-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #E63946;
+            margin-bottom: 8px;
+        }
+
+        .wrong-words-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .wrong-words-list li {
+            font-size: 1.05rem;
+            margin-bottom: 6px;
+            color: #0D3B66;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌟 Mari Mengeja Suku Kata</h1>
+    <p class="sub-title">Sebut huruf dan bunyi suku kata untuk menang!</p>
+
+    <!-- Skrin Mula -->
+    <div id="startScreen">
+        <div class="input-group">
+            <label for="playerName">Masukkan Nama Anda:</label>
+            <input type="text" id="playerName" class="name-input" placeholder="Contoh: Ali" autocomplete="off">
+        </div>
+
+        <div class="instructions-box">
+            <h3>📖 Cara Bermain:</h3>
+            <ol>
+                <li>Lihat objek dan perkataan yang dipaparkan.</li>
+                <li>Eja perkataan dengan betul.</li>
+                <li>Kumpul markah anda.</li>
+            </ol>
+        </div>
+
+        <button class="start-btn" onclick="mulaPermainan()">Mula Bermain 🚀</button>
+    </div>
+
+    <!-- Area Permainan -->
+    <div id="gameArea">
+        <div class="header-info">
+            <div class="greeting" id="playerGreeting"></div>
+            <div class="score-box" id="scoreDisplay">Markah: 0</div>
+        </div>
+
+        <div class="card">
+            <div class="emoji-display" id="emoji">🥚</div>
+            <div class="word-label" id="wordLabel">Perkataan: TELUR</div>
+            <button class="listen-word-btn" onclick="sebutPerkataanSemasa()">🔊 Dengar Perkataan</button>
+            <div class="syllables-display" id="syllableContainer"></div>
+        </div>
+
+        <div class="controls">
+            <button class="mic-btn" id="micBtn" onclick="mulaMengeja()">
+                🎤 Sedia Mengeja
+            </button>
+        </div>
+
+        <div class="status-msg" id="statusMsg">Tekan butang untuk mula.</div>
+        
+        <button class="next-btn" id="nextBtn" onclick="kataSeterusnya()">
+            Perkataan Seterusnya ➡️
+        </button>
+    </div>
+
+    <!-- Skrin Keputusan Akhir -->
+    <div id="resultScreen">
+        <h2>🏆 Keputusan Permainan</h2>
+        <div class="result-card">
+            <div class="final-score" id="finalScoreText">Jumlah Markah: 0 / 100</div>
+            <div class="stars-display" id="starsDisplay">⭐⭐⭐⭐⭐</div>
+            <div class="feedback-text" id="feedbackText">Syabas!</div>
+            
+            <!-- Bahagian Senarai Perkataan Salah -->
+            <div class="wrong-words-container" id="wrongWordsBox" style="display: none;">
+                <div class="wrong-words-title">📌 Perkataan Yang Perlu Diperbaiki:</div>
+                <ul class="wrong-words-list" id="wrongWordsList"></ul>
+            </div>
+        </div>
+        <button class="restart-btn" onclick="mainSemula()">Main Semula 🔄</button>
+    </div>
+</div>
+
+<script>
+    // ========================================================
+    // FUNGSI PENGHANTARAN DATA GAME KE GOOGLE SHEETS (GAME 3)
+    // ========================================================
+    function hantarKeputusanGame(namaMurid, skorMurid, ulasanGame) {
+      var scriptURL = "https://script.google.com/macros/s/AKfycbyDsjoikwEU7qKmyP4-C3s5Vw20i7ZIu5myo53Q2BU2vyOnFo_TfwriW0p9FyuEaMXeoA/exec";
+
+      var dataGame = {
+        nama: namaMurid,
+        book: "KHAS BATU BELAH BATU BERTANGKUP", // Tab partition Google Sheet
+        game: 3,                            // Ditandakan 3 untuk Game 3
+        skor: skorMurid,
+        ulasan: ulasanGame || ""
+      };
+
+      fetch(scriptURL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(dataGame)
+      })
+      .then(function() {
+        console.log("Data Game 3 (G3) berjaya dihantar ke Google Sheets!");
+      })
+      .catch(function(error) {
+        console.error("Ralat semasa menghantar data G3 ke Google Sheets:", error);
+      });
+    }
+
+    const senaraiKata = [
+        { 
+            kata: "TELUR", 
+            emoji: "🥚", 
+            audio: "telur.mp3",
+            sukuKata: [
+                { teks: "TE", huruf: ["T", "E"] },
+                { teks: "LUR", huruf: ["L", "U", "R"] }
+            ] 
+        },
+        { 
+            kata: "IKAN", 
+            emoji: "🐟", 
+            audio: "ikan.mp3",
+            sukuKata: [
+                { teks: "I", huruf: ["I"] },
+                { teks: "KAN", huruf: ["K", "A", "N"] }
+            ] 
+        },
+        { 
+            kata: "BATU", 
+            emoji: "🪨🧱", 
+            audio: "batu.mp3",
+            sukuKata: [
+                { teks: "BA", huruf: ["B", "A"] },
+                { teks: "TU", huruf: ["T", "U"] }
+            ] 
+        },
+        { 
+            kata: "ADIK", 
+            emoji: "👶", 
+            audio: "adik.mp3",
+            sukuKata: [
+                { teks: "A", huruf: ["A"] },
+                { teks: "DIK", huruf: ["D", "I", "K"] }
+            ] 
+        },
+        { 
+            kata: "IBU", 
+            emoji: "👩", 
+            audio: "ibu.mp3",
+            sukuKata: [
+                { teks: "I", huruf: ["I"] },
+                { teks: "BU", huruf: ["B", "U"] }
+            ] 
+        },
+        { 
+            kata: "KAKAK", 
+            emoji: "👧", 
+            audio: "kakak.mp3",
+            sukuKata: [
+                { teks: "KA", huruf: ["K", "A"] },
+                { teks: "KAK", huruf: ["K", "A", "K"] }
+            ] 
+        },
+        { 
+            kata: "RUMAH", 
+            emoji: "🏠", 
+            audio: "rumah.mp3",
+            sukuKata: [
+                { teks: "RU", huruf: ["R", "U"] },
+                { teks: "MAH", huruf: ["M", "A", "H"] }
+            ] 
+        },
+        { 
+            kata: "MAKAN", 
+            emoji: "🍽️", 
+            audio: "makan.mp3",
+            sukuKata: [
+                { teks: "MA", huruf: ["M", "A"] },
+                { teks: "KAN", huruf: ["K", "A", "N"] }
+            ] 
+        },
+        { 
+            kata: "SEDIH", 
+            emoji: "😢", 
+            audio: "sedih.mp3",
+            sukuKata: [
+                { teks: "SE", huruf: ["S", "E"] },
+                { teks: "DIH", huruf: ["D", "I", "H"] }
+            ] 
+        },
+        { 
+            kata: "TELAN", 
+            emoji: "😮", 
+            audio: "telan.mp3",
+            sukuKata: [
+                { teks: "TE", huruf: ["T", "E"] },
+                { teks: "LAN", huruf: ["L", "A", "N"] }
+            ] 
+        }
+    ];
+
+    let namaPemain = "";
+    let indeksKataSemasa = 0;
+    let indeksSukuKataSemasa = 0;
+    let jumlahMarkah = 0;
+    let pengecamSuara;
+    let adakahSedangMendengar = false;
+    let sedangMemprosesTersalah = false;
+    let pemainAudioSemasa = null;
+
+    // Pembolehubah Jejak Ralat Perkataan Semasa & Senarai Perkataan Salah
+    let pernahPernahTersalahEja = false;
+    let senaraiPerkataanSalah = [];
+
+    function mainAudio(namaFail) {
+        if (pemainAudioSemasa) {
+            pemainAudioSemasa.pause();
+            pemainAudioSemasa.currentTime = 0;
+        }
+        
+        pemainAudioSemasa = new Audio(namaFail);
+        const janjiAudio = pemainAudioSemasa.play();
+        
+        if (janjiAudio !== undefined) {
+            janjiAudio.catch(err => {
+                console.warn("Audio ralat / tidak dijumpai: " + namaFail, err);
+            });
+        }
+    }
+
+    function sebutPerkataanSemasa() {
+        const itemSemasa = senaraiKata[indeksKataSemasa];
+        if (itemSemasa && itemSemasa.audio) {
+            mainAudio(itemSemasa.audio);
+        }
+    }
+
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        pengecamSuara = new SpeechRecognition();
+        
+        pengecamSuara.lang = 'ms-MY';
+        pengecamSuara.continuous = true;
+        pengecamSuara.interimResults = true;
+
+        pengecamSuara.onresult = function(event) {
+            const KeputusanTerakhir = event.results[event.results.length - 1];
+            const sebutan = KeputusanTerakhir[0].transcript.toUpperCase().trim();
+            
+            kemaskiniStatus(`Suara dikesan: "${sebutan}"`);
+            semakEjaanSukuKata(sebutan);
+        };
+
+        pengecamSuara.onerror = function(event) {
+            console.error("Ralat pengecam suara:", event.error);
+            kemaskiniStatus("Sistem tidak mendengar dengan jelas. Sila cuba lagi.");
+            hentikanPengecam();
+        };
+
+        pengecamSuara.onend = function() {
+            if (adakahSedangMendengar) {
+                pengecamSuara.start();
+            }
+        };
+    } else {
+        alert("Penyemak imbas anda tidak menyokong pengecam suara. Sila gunakan Google Chrome.");
+    }
+
+    function mulaPermainan() {
+        const inputNama = document.getElementById('playerName').value.trim();
+        namaPemain = inputNama !== "" ? inputNama : "Kawan";
+
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('resultScreen').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'block';
+
+        jumlahMarkah = 0;
+        indeksKataSemasa = 0;
+        senaraiPerkataanSalah = [];
+
+        document.getElementById('playerGreeting').innerText = `Selamat mencuba, ${namaPemain}! 👋`;
+        document.getElementById('scoreDisplay').innerText = `Markah: ${jumlahMarkah}`;
+
+        muatPerkataan();
+    }
+
+    function muatPerkataan() {
+        const itemSemasa = senaraiKata[indeksKataSemasa];
+        document.getElementById('emoji').innerText = itemSemasa.emoji;
+        document.getElementById('wordLabel').innerText = `Perkataan (${indeksKataSemasa + 1}/${senaraiKata.length}): ${itemSemasa.kata}`;
+        
+        const container = document.getElementById('syllableContainer');
+        container.innerHTML = '';
+        
+        indeksSukuKataSemasa = 0;
+        pernahPernahTersalahEja = false; // Reset jejak ralat untuk soalan baharu
+        
+        itemSemasa.sukuKata.forEach((sk, skIdx) => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = `syllable-group ${skIdx === 0 ? 'active-group' : ''}`;
+            groupDiv.id = `group-${skIdx}`;
+
+            sk.huruf.forEach((h, hIdx) => {
+                const box = document.createElement('div');
+                box.className = 'letter-box';
+                box.id = `box-${skIdx}-${hIdx}`;
+                box.innerText = h;
+                box.style.color = 'transparent';
+                groupDiv.appendChild(box);
+            });
+
+            container.appendChild(groupDiv);
+        });
+
+        kemaskiniKumpulanAktif();
+        document.getElementById('nextBtn').style.display = 'none';
+        kemaskiniStatus("Tekan mikrofon untuk mula mengeja.");
+
+        sebutPerkataanSemasa();
+    }
+
+    function kemaskiniKumpulanAktif() {
+        const itemSemasa = senaraiKata[indeksKataSemasa];
+        
+        itemSemasa.sukuKata.forEach((_, idx) => {
+            const group = document.getElementById(`group-${idx}`);
+            if (idx === indeksSukuKataSemasa) {
+                group.classList.add('active-group');
+            } else {
+                group.classList.remove('active-group');
+            }
+        });
+    }
+
+    function mulaMengeja() {
+        if (!pengecamSuara) return;
+
+        if (!adakahSedangMendengar) {
+            adakahSedangMendengar = true;
+            pengecamSuara.start();
+            
+            const btn = document.getElementById('micBtn');
+            btn.classList.add('listening');
+            btn.innerHTML = '🔴 Sedang Mendengar...';
+            
+            kemaskiniStatus(`Sedia mendengar... Sila eja perkataan.`);
+        } else {
+            hentikanPengecam();
+            const itemSemasa = senaraiKata[indeksKataSemasa];
+            if (indeksSukuKataSemasa < itemSemasa.sukuKata.length) {
+                kemaskiniStatus("Cuba lagi!");
+                mainAudio("cuba_lagi.mp3");
+            }
+        }
+    }
+
+    function hentikanPengecam() {
+        adakahSedangMendengar = false;
+        if (pengecamSuara) pengecamSuara.stop();
+        
+        const btn = document.getElementById('micBtn');
+        btn.classList.remove('listening');
+        btn.innerHTML = '🎤 Sedia Mengeja';
+    }
+
+    function semakEjaanSukuKata(sebutan) {
+        if (sedangMemprosesTersalah) return;
+
+        const itemSemasa = senaraiKata[indeksKataSemasa];
+        const skSemasa = itemSemasa.sukuKata[indeksSukuKataSemasa];
+        
+        const mengandungiBunyiSukuKata = sebutan.includes(skSemasa.teks);
+        const mengandungiSemuaHuruf = skSemasa.huruf.every(h => sebutan.includes(h));
+
+        if (mengandungiBunyiSukuKata || mengandungiSemuaHuruf) {
+            skSemasa.huruf.forEach((_, hIdx) => {
+                const box = document.getElementById(`box-${indeksSukuKataSemasa}-${hIdx}`);
+                box.style.color = '#0D3B66';
+                box.classList.add('completed');
+                box.classList.remove('wrong-flash');
+            });
+
+            indeksSukuKataSemasa++;
+
+            if (indeksSukuKataSemasa < itemSemasa.sukuKata.length) {
+                kemaskiniKumpulanAktif();
+                kemaskiniStatus(`Bagus! Teruskan mengeja suku kata seterusnya.`);
+            } else {
+                hentikanPengecam();
+                
+                // Tambah markah HANYA JIKA tiada kesalahan ejaan dibuat sepanjang soalan ini
+                if (!pernahPernahTersalahEja) {
+                    jumlahMarkah += 10;
+                    document.getElementById('scoreDisplay').innerText = `Markah: ${jumlahMarkah}`;
+                }
+
+                const mesejKejayaan = `Syabas ${namaPemain}! Anda berjaya mengeja ${itemSemasa.kata}!`;
+                kemaskiniStatus("🎉 " + mesejKejayaan);
+                mainAudio("syabas.mp3");
+                document.getElementById('nextBtn').style.display = 'inline-block';
+            }
+        } else if (sebutan.length > 1) {
+            // Ejaan Salah: Tandakan bahawa perkataan ini pernah tersalah eja
+            if (!pernahPernahTersalahEja) {
+                pernahPernahTersalahEja = true;
+                // Simpan perkataan dan ejaan betul suku kata ke dalam senarai ralat
+                const ejaanLengkapSukuKata = itemSemasa.sukuKata.map(s => s.teks).join(" - ");
+                senaraiPerkataanSalah.push({
+                    kata: itemSemasa.kata,
+                    emoji: itemSemasa.emoji,
+                    ejaanBetul: ejaanLengkapSukuKata
+                });
+            }
+
+            sedangMemprosesTersalah = true;
+            
+            skSemasa.huruf.forEach((_, hIdx) => {
+                const box = document.getElementById(`box-${indeksSukuKataSemasa}-${hIdx}`);
+                if (!box.classList.contains('completed')) {
+                    box.classList.add('wrong-flash');
+                }
+            });
+
+            setTimeout(() => {
+                skSemasa.huruf.forEach((_, hIdx) => {
+                    const box = document.getElementById(`box-${indeksSukuKataSemasa}-${hIdx}`);
+                    box.classList.remove('wrong-flash');
+                });
+                sedangMemprosesTersalah = false;
+            }, 800);
+        }
+    }
+
+    function kemaskiniStatus(mesej) {
+        document.getElementById('statusMsg').innerText = mesej;
+    }
+
+    function kataSeterusnya() {
+        if (indeksKataSemasa < senaraiKata.length - 1) {
+            indeksKataSemasa++;
+            muatPerkataan();
+        } else {
+            paparKeputusanAkhir();
+        }
+    }
+
+    function paparKeputusanAkhir() {
+        document.getElementById('gameArea').style.display = 'none';
+        document.getElementById('resultScreen').style.display = 'block';
+
+        document.getElementById('finalScoreText').innerText = `Markah Akhir: ${jumlahMarkah} / 100`;
+
+        let bintang = "";
+        let ulasan = "";
+        let audioUlasan = "";
+
+        if (jumlahMarkah >= 90) {
+            bintang = "⭐⭐⭐⭐⭐";
+            ulasan = `Luar biasa ${namaPemain}! Anda pakar mengeja yang hebat! 🏆`;
+            audioUlasan = "ulasan_5.mp3";
+        } else if (jumlahMarkah >= 70) {
+            bintang = "⭐⭐⭐⭐";
+            ulasan = `Syabas ${namaPemain}! Pencapaian yang sangat baik! 🎉`;
+            audioUlasan = "ulasan_4.mp3";
+        } else if (jumlahMarkah >= 50) {
+            bintang = "⭐⭐⭐";
+            ulasan = `Bagus ${namaPemain}! Usaha yang baik, teruskan latihan! 👍`;
+            audioUlasan = "ulasan_3.mp3";
+        } else if (jumlahMarkah >= 30) {
+            bintang = "⭐⭐";
+            ulasan = `Tidak mengapa ${namaPemain}, cuba lagi untuk dapatkan markah lebih tinggi! 💪`;
+            audioUlasan = "ulasan_2.mp3";
+        } else {
+            bintang = "⭐";
+            ulasan = `Jangan putus asa ${namaPemain}. Jom berlatih lagi untuk jadi lebih hebat. ✨`;
+            audioUlasan = "ulasan_1.mp3";
+        }
+
+        document.getElementById('starsDisplay').innerText = bintang;
+        document.getElementById('feedbackText').innerText = ulasan;
+
+        // Paparkan senarai soalan yang tersalah eja bersama ejaan betul
+        const wrongWordsBox = document.getElementById('wrongWordsBox');
+        const wrongWordsList = document.getElementById('wrongWordsList');
+        wrongWordsList.innerHTML = '';
+
+        if (senaraiPerkataanSalah.length > 0) {
+            senaraiPerkataanSalah.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `${item.emoji} <strong>${item.kata}</strong> ➔ Jawapan Betul: <span style="color: #0D3B66; font-weight: bold;">${item.ejaanBetul}</span>`;
+                wrongWordsList.appendChild(li);
+            });
+            wrongWordsBox.style.display = 'block';
+        } else {
+            wrongWordsBox.style.display = 'none';
+        }
+
+        // Hantar data markah Game 3 ke Google Sheets
+        hantarKeputusanGame(namaPemain, jumlahMarkah, ulasan);
+
+        mainAudio(audioUlasan);
+    }
+
+    function mainSemula() {
+        document.getElementById('resultScreen').style.display = 'none';
+        document.getElementById('startScreen').style.display = 'flex';
+    }
+</script>
+
+</body>
+</html>
